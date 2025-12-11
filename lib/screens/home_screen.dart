@@ -6,62 +6,70 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // SafeArea agar konten tidak tertutup status bar
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE8F5E9), // hijau sangat muda
-              Color(0xFFB3E5FC), // biru sangat muda
-            ],
-          ),
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(32),
-            bottom: Radius.circular(32),
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Floating card header
-                  _HeaderCard(),
-                  const SizedBox(height: 18),
-                  // Card Belajar Tentang Daun
-                  _BelajarCard(),
-                  const SizedBox(height: 24),
-                  // Judul section venasi
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4.0),
-                    child: Text(
-                      '4 Jenis Venasi Daun',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Grid venasi daun
-                  _VenasiGrid(),
-                  const SizedBox(height: 28),
-                  // Tombol Scan Daun
-                  Center(child: _ScanDaunButton()),
-                  const SizedBox(height: 32),
-                  // Card Prestasi
-                  _PrestasiCard(),
-                  const SizedBox(height: 24),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFE8F5E9),
+                  Color(0xFFB3E5FC),
                 ],
               ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(32),
+                bottom: Radius.circular(32),
+              ),
             ),
-          ),
-        ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Floating card header
+                        _HeaderCard(),
+                        const SizedBox(height: 18),
+                        // Card Belajar Tentang Daun
+                        _BelajarCard(),
+                        const SizedBox(height: 24),
+                        // Judul section venasi
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 4.0),
+                          child: Text(
+                            '4 Jenis Venasi Daun',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Grid venasi daun
+                        _VenasiGrid(),
+                        const SizedBox(height: 28),
+                        // Tombol Scan Daun
+                        Center(child: _ScanDaunButton()),
+                        const SizedBox(height: 32),
+                        // Card Prestasi
+                        _PrestasiCard(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -112,7 +120,7 @@ class _HeaderCard extends StatelessWidget {
           // Icon user
           GestureDetector(
             onTap: () {
-              print('User icon tapped');
+              Navigator.pushNamed(context, '/profile');
             },
             child: Container(
               width: 32,
@@ -277,7 +285,7 @@ class _ScanDaunButton extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: () {
-            print('Scan Daun tapped');
+            Navigator.pushNamed(context, '/scan');
           },
           child: Container(
             width: 80,
@@ -318,7 +326,7 @@ class _PrestasiCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        print('Prestasi tapped');
+        Navigator.pushNamed(context, '/achievement');
       },
       child: Container(
         padding: const EdgeInsets.all(14),
