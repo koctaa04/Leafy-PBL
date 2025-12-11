@@ -53,6 +53,12 @@ class ProfileScreen extends StatelessWidget {
                   // Grid/list koleksi daun
                   _LeafCollectionGrid(),
                   const SizedBox(height: 24),
+                  // Tombol menu Pengaturan
+                  _SettingsMenuCard(),
+                  const SizedBox(height: 14),
+                  // Tombol menu Keluar
+                  _LogoutMenuCard(),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -326,6 +332,93 @@ class LeafCollectionCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Tombol menu Pengaturan
+class _SettingsMenuCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        print('Go to settings');
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // Icon gear di kiri
+            Icon(Icons.settings, color: Colors.black54, size: 28),
+            const SizedBox(width: 16),
+            // Teks Pengaturan
+            const Text(
+              'Pengaturan',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Tombol menu Keluar
+class _LogoutMenuCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        print('Logout tapped');
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+          border: Border.all(color: Color(0xFFD32F2F), width: 1.2),
+        ),
+        child: Row(
+          children: [
+            // Icon logout merah di kiri
+            Icon(Icons.logout, color: Color(0xFFD32F2F), size: 28),
+            const SizedBox(width: 16),
+            // Teks Keluar warna merah
+            const Text(
+              'Keluar',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color(0xFFD32F2F),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
