@@ -8,6 +8,7 @@ import 'screens/leaf_detail_screen.dart';
 import 'screens/achievement_screen.dart';
 import 'screens/learn_leaf_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/register_screen.dart';
 
 void main() {
   runApp(const LeafLearnApp());
@@ -26,6 +27,7 @@ class LeafLearnApp extends StatelessWidget {
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
+        '/register': (context) => const RegisterScreen(),
         '/profile': (context) => const ProfileScreen(),
         // '/scan': (context) => const ScanScreen(),
         '/leaf-detail': (context) => const LeafDetailScreen(),
