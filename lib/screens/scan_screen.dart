@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
+import 'leaf_result_screen.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -16,10 +17,18 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   Future<void> _pickFromGallery() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      // TODO: Implementasi setelah gambar dipilih
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gambar dipilih: ${picked.name}')),
+      // Navigasi ke halaman result dengan gambar asset (sementara)
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LeafResultScreen(
+            predictedType: 'Menyirip',
+            imagePath: null,
+            imageUrl: null,
+          ),
+        ),
       );
+      // Untuk implementasi ke depan, gunakan picked.path sebagai imagePath
     }
   }
   CameraController? _controller;
@@ -227,6 +236,17 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                           if (repeatCount >= 2) {
                             _scanAnimController?.removeStatusListener(statusListener);
                             setState(() => _showScanAnim = false);
+                            // Navigasi ke halaman result dengan gambar asset (sementara)
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => LeafResultScreen(
+                                  predictedType: 'Menyirip',
+                                  imagePath: null,
+                                  imageUrl: null,
+                                ),
+                              ),
+                            );
                             return;
                           }
                         }
