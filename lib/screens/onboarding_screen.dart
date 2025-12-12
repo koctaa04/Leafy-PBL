@@ -7,9 +7,12 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  late AnimationController _iconAnimController;
+  late Animation<double> _iconBounceAnim;
 
   final List<_OnboardingPageData> _pages = [
     _OnboardingPageData(
@@ -43,7 +46,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   @override
+
+  @override
+  void initState() {
+    super.initState();
+    _iconAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _iconBounceAnim = Tween<double>(begin: 0.0, end: -38.0).animate(
+      CurvedAnimation(parent: _iconAnimController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
   void dispose() {
+    _iconAnimController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -90,26 +108,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Icon bulat besar
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: page.iconBg,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 16,
-                                offset: Offset(0, 8),
+                        // Icon bulat besar dengan animasi goyang
+                        AnimatedBuilder(
+                          animation: _iconAnimController,
+                          builder: (context, child) {
+                            return Transform.translate(
+                              offset: Offset(0, _iconBounceAnim.value),
+                              child: child,
+                            );
+                          },
+                          child: Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: page.iconBg,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Icon(
+                                page.icon,
+                                color: page.iconColor,
+                                size: 56,
                               ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Icon(
-                              page.icon,
-                              color: page.iconColor,
-                              size: 56,
                             ),
                           ),
                         ),
