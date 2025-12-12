@@ -6,6 +6,7 @@ import 'screens/profile_screen.dart';
 import 'screens/scan_screen.dart';
 import 'screens/leaf_detail_screen.dart';
 import 'screens/achievement_screen.dart';
+import 'screens/learn_leaf_screen.dart';
 
 void main() {
   runApp(const LeafLearnApp());
@@ -27,6 +28,7 @@ class LeafLearnApp extends StatelessWidget {
         '/scan': (context) => const ScanScreen(),
         '/leaf-detail': (context) => const LeafDetailScreen(),
         '/achievement': (context) => const AchievementScreen(),
+        '/learn-leaf': (context) => const LearnLeafScreen(),
       },
     );
   }

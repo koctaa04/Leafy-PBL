@@ -146,7 +146,7 @@ class _BelajarCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        print('Belajar Tentang Daun tapped');
+        Navigator.pushNamed(context, '/learn-leaf');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
