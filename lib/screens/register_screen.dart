@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -8,6 +9,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+    bool _isLoading = false;
+    String? _firebaseError;
   String? _usernameError;
 
   final _usernameController = TextEditingController();
@@ -169,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _usernameController,
                       onChanged: (_) => _validateUsername(),
                       decoration: InputDecoration(
-                        hintText: 'contoh: leafyuser123',
+                        hintText: 'contoh: leafy',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -340,8 +343,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         _validatePassword();
                         _validateConfirm();
                         if (_usernameError == null && _emailError == null && _passwordError == null && _confirmError == null) {
-                          // TODO: Implementasi logika daftar
-                          Navigator.pop(context);
+                          setState(() {
+                            _isLoading = true;
+                            _firebaseError = null;
+                          });
+                          try {
+                            final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                              email: _emailController.text.trim(),
+                              password: _passwordController.text.trim(),
+                            );
+                            // Sukses daftar, bisa simpan username ke Firestore jika perlu
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          } on FirebaseAuthException catch (e) {
+                            setState(() {
+                              _firebaseError = e.message ?? 'Gagal daftar, coba lagi.';
+                            });
+                          } catch (e) {
+                            setState(() {
+                              _firebaseError = 'Gagal daftar, coba lagi.';
+                            });
+                          } finally {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -359,6 +386,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                   ),
+                  if (_firebaseError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 2),
+                      child: Text(
+                        _firebaseError!,
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

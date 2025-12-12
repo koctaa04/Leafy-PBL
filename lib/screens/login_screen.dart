@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,12 +12,61 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _showPassword = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+  String? _emailError;
+  String? _passwordError;
+
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+      _emailError = null;
+      _passwordError = null;
+    });
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    bool hasError = false;
+    if (email.isEmpty) {
+      _emailError = 'Email wajib diisi';
+      hasError = true;
+    }
+    if (password.isEmpty) {
+      _passwordError = 'Password wajib diisi';
+      hasError = true;
+    }
+    if (hasError) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      setState(() {
+        _isLoading = false;
+      });
+      Navigator.pushReplacementNamed(context, '/home');
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _isLoading = false;
+        // Always show user-friendly error for login failure
+        _errorMessage = 'Email atau password yang kamu masukkan salah.';
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Terjadi kesalahan. Coba lagi.';
+      });
+    }
   }
 
   @override
@@ -75,7 +125,37 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Colors.grey,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    // Error message as alert (between title and email field)
+                    if (_errorMessage != null && _errorMessage!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24, bottom: 4),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFEBEE), // soft red background
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFD32F2F), size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: Color(0xFFD32F2F),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 22),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: const Text(
@@ -95,14 +175,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: TextField(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          hintText: 'nama@email.com',
+                        decoration: InputDecoration(
+                          hintText: 'contoh: leafy@email.com',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         ),
                         keyboardType: TextInputType.emailAddress,
                       ),
                     ),
+                    if (_emailError != null && _emailError!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 4, bottom: 2),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _emailError!,
+                            style: const TextStyle(color: Colors.red, fontSize: 13),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 20),
                     Align(
                       alignment: Alignment.centerLeft,
@@ -125,7 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: !_showPassword,
                         decoration: InputDecoration(
-                          hintText: '••••••••',
+                          hintText: 'minimal 8 karakter',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           suffixIcon: IconButton(
@@ -139,29 +232,46 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    if (_passwordError != null && _passwordError!.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 4, bottom: 2),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _passwordError!,
+                            style: const TextStyle(color: Colors.red, fontSize: 13),
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 32),
                     // Tombol Masuk besar
                     SizedBox(
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Navigasi ke home
-                          Navigator.pushReplacementNamed(context, '/home');
-                        },
+                        onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF00C853),
                           shape: const StadiumBorder(),
                           elevation: 2,
                         ),
-                        child: const Text(
-                          'Masuk',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : const Text(
+                                'Masuk',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 18),

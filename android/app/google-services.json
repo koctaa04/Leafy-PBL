@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "980095635244",
+    "project_id": "leafy-pbl",
+    "storage_bucket": "leafy-pbl.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:980095635244:android:269e04a73bc8af13a82689",
+        "android_client_info": {
+          "package_name": "com.example.leafy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIvi0_bAy3gOA7KwRwH0O0L6OrjocUZxQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
