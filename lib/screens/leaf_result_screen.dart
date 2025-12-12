@@ -76,11 +76,11 @@ class LeafResultScreen extends StatefulWidget {
   final String? imageUrl; // Network image url atau null
 
   const LeafResultScreen({
-    Key? key,
+    super.key,
     required this.predictedType,
     this.imagePath,
     this.imageUrl,
-  }) : super(key: key);
+  });
 
   @override
   State<LeafResultScreen> createState() => _LeafResultScreenState();
@@ -420,7 +420,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                                       await _tts.stop();
                                       setState(() => _isPlaying = false);
                                     }
-                                  : () => _speak(content.explanation + ". Ciri-ciri: " + content.features.join(", ")), 
+                                  : () => _speak("${content.explanation}. Ciri-ciri: ${content.features.join(", ")}"), 
                             ),
                           ),
                           const SizedBox(height: 12),
