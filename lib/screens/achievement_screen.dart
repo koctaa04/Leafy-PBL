@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AchievementScreen extends StatelessWidget {
-  const AchievementScreen({Key? key}) : super(key: key);
+  const AchievementScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +148,7 @@ class RankingItem extends StatelessWidget {
   final IconData icon;
   final Color badgeColor;
   final bool highlight;
-  const RankingItem({
+  const RankingItem({super.key, 
     required this.rank,
     required this.name,
     required this.xp,
@@ -215,7 +215,7 @@ class RankingItem extends StatelessWidget {
           ),
           // XP di kanan
           Text(
-            '${xp} XP',
+            '$xp XP',
             style: const TextStyle(
               fontSize: 14,
               color: Colors.black54,
@@ -279,7 +279,7 @@ class MedalItem extends StatelessWidget {
   final String name;
   final IconData icon;
   final Color color;
-  const MedalItem({required this.name, required this.icon, required this.color});
+  const MedalItem({super.key, required this.name, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {

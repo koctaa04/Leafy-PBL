@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +149,7 @@ class _BelajarCard extends StatelessWidget {
         print('Belajar Tentang Daun tapped');
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -162,22 +162,24 @@ class _BelajarCard extends StatelessWidget {
           ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Placeholder gambar
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(16),
+            // Gambar daun-3d.jpg
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/daun-3d.jpg',
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
               ),
-              child: const Icon(Icons.image, color: Colors.grey, size: 32),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 16),
             // Judul dan subteks
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: const [
                   Text(
                     'Belajar Tentang Daun',
@@ -187,7 +189,7 @@ class _BelajarCard extends StatelessWidget {
                       color: Colors.black87,
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 6),
                   Text(
                     'Pelajari berbagai jenis daun',
                     style: TextStyle(
@@ -198,6 +200,9 @@ class _BelajarCard extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: 12),
+            // Icon panah kanan
+            Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 20),
           ],
         ),
       ),

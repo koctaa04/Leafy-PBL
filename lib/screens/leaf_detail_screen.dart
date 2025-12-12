@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LeafDetailScreen extends StatelessWidget {
-  const LeafDetailScreen({Key? key}) : super(key: key);
+  const LeafDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

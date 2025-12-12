@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -275,7 +275,7 @@ class _LeafCollectionGrid extends StatelessWidget {
 class LeafCollectionCard extends StatelessWidget {
   final String name;
   final String venasi;
-  const LeafCollectionCard({required this.name, required this.venasi});
+  const LeafCollectionCard({super.key, required this.name, required this.venasi});
 
   @override
   Widget build(BuildContext context) {

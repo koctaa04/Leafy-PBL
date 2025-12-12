@@ -12,7 +12,7 @@ void main() {
 }
 
 class LeafLearnApp extends StatelessWidget {
-  const LeafLearnApp({Key? key}) : super(key: key);
+  const LeafLearnApp({super.key});
 
   @override
   Widget build(BuildContext context) {
