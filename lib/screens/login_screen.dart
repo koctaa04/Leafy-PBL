@@ -34,29 +34,13 @@ class LoginScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 36),
-                      // Logo daun hijau dalam lingkaran kecil
-                      Container(
+                      const SizedBox(height: 64), // Tambah jarak ke bawah
+                      // Logo gambar leafy tanpa box
+                      Image.asset(
+                        'assets/logo-leafy.png',
                         width: 64,
                         height: 64,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF00C853),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 12,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.eco,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                        ),
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 32),
                       // Judul utama

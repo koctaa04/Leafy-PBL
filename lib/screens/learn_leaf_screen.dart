@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LearnLeafScreen extends StatelessWidget {
-  const LearnLeafScreen({Key? key}) : super(key: key);
+  const LearnLeafScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

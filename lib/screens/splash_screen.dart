@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -64,28 +64,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 opacity: _fadeAnim,
                 child: ScaleTransition(
                   scale: _scaleAnim,
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.eco,
-                        color: Color(0xFF00C853),
-                        size: 64,
-                      ),
-                    ),
+                  child: Image.asset(
+                    'assets/logo-leafy.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               const Text(
                 'Leafy',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF00C853),
                   letterSpacing: 1.2,

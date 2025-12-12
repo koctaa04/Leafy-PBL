@@ -95,16 +95,11 @@ class _HeaderCard extends StatelessWidget {
       child: Row(
         children: [
           // Logo daun
-          Container(
+          Image.asset(
+            'assets/logo-leafy.png',
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              color: Color(0xFF00C853),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(Icons.eco, color: Colors.white, size: 20),
-            ),
+            fit: BoxFit.contain,
           ),
           const SizedBox(width: 10),
           // Teks Leafy
