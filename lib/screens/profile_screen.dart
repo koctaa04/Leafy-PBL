@@ -1,5 +1,11 @@
+import '../widgets/venation_modal.dart';
+import 'settings_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_profile.dart';
+import '../utils/level_utils.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -110,9 +116,56 @@ class _TopBar extends StatelessWidget {
 }
 
 // Kartu profil besar
-class _ProfileCard extends StatelessWidget {
+class _ProfileCard extends StatefulWidget {
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  UserProfile? _profile;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      setState(() {
+        _profile = doc.exists ? UserProfile.fromFirestore(doc) : UserProfile(uid: user.uid, displayName: user.displayName ?? 'Pengguna', email: user.email);
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final name = _profile?.displayName ?? 'Pengguna';
+    final bio = _profile?.bio ?? 'Belum ada biodata.';
+    final xp = _profile?.xp ?? 0;
+    final levelInfo = getLevelInfo(xp);
+    final level = levelInfo.level;
+    final xpToNext = levelInfo.isMax ? 0 : levelInfo.xpToNext;
+    final minXp = levelInfo.minXp;
+    final maxXp = levelInfo.maxXp;
+    final progress = levelInfo.isMax ? 1.0 : ((xp - minXp) / (levelInfo.xpToNext));
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
       decoration: BoxDecoration(
@@ -131,24 +184,34 @@ class _ProfileCard extends StatelessWidget {
           // Avatar bundar
           CircleAvatar(
             radius: 32,
-            backgroundColor: Color(0xFF00C853),
-            child: const Icon(Icons.pets, size: 40, color: Colors.white), // Koala icon placeholder
+            backgroundColor: const Color(0xFF00C853),
+            child: const Icon(Icons.pets, size: 40, color: Colors.white),
           ),
           const SizedBox(height: 16),
           // Nama
-          const Text(
-            'Kamu',
-            style: TextStyle(
+          Text(
+            name,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
           const SizedBox(height: 6),
+          // Biodata
+          Text(
+            bio,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
           // Subteks level
-          const Text(
-            'Level 7 · Penjelajah',
-            style: TextStyle(
+          Text(
+            levelInfo.isMax ? 'Level 10 · Master Daun' : 'Level $level',
+            style: const TextStyle(
               fontSize: 15,
               color: Colors.grey,
             ),
@@ -157,19 +220,19 @@ class _ProfileCard extends StatelessWidget {
           // Progress bar XP
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text('1750 XP', style: TextStyle(fontSize: 13, color: Colors.black54)),
-              Text('2000 XP', style: TextStyle(fontSize: 13, color: Colors.black54)),
+            children: [
+              Text('$xp XP', style: const TextStyle(fontSize: 13, color: Colors.black54)),
+              Text(levelInfo.isMax ? 'MAX' : '${maxXp} XP', style: const TextStyle(fontSize: 13, color: Colors.black54)),
             ],
           ),
           const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: 1750 / 2000,
+              value: progress.clamp(0.0, 1.0),
               minHeight: 10,
-              backgroundColor: Color(0xFFE0E0E0),
-              valueColor: AlwaysStoppedAnimation(Color(0xFF00C853)),
+              backgroundColor: const Color(0xFFE0E0E0),
+              valueColor: const AlwaysStoppedAnimation(Color(0xFF00C853)),
             ),
           ),
         ],
@@ -342,102 +405,61 @@ class LeafCollectionCard extends StatelessWidget {
 }
 
 void _showLeafExplanation(BuildContext context, String name, String venasi) {
-  final explanations = {
+  // Data child-friendly untuk setiap venasi
+  final data = {
     'Menyirip': {
-      'image': Icons.grass,
       'title': 'Venasi Menyirip',
-      'desc': 'Tulang daun utama dengan cabang-cabang seperti sirip ikan. Contoh: daun mangga.'
+      'explanation': 'Tulang daun menyebar ke samping seperti tulang ikan 🐟',
+      'characteristics': [
+        'Tulang utama di tengah',
+        'Cabang ke kanan dan kiri',
+        'Bentuk seperti sirip ikan',
+      ],
+      'asset': 'assets/venasi_menyirip.png',
     },
     'Menjari': {
-      'image': Icons.filter_vintage,
       'title': 'Venasi Menjari',
-      'desc': 'Tulang daun menyebar dari satu titik seperti jari-jari tangan. Contoh: daun pepaya.'
+      'explanation': 'Tulang daun menyebar dari satu titik seperti jari-jari tangan ✋',
+      'characteristics': [
+        'Tulang utama bercabang dari satu titik',
+        'Bentuk seperti jari tangan',
+      ],
+      'asset': 'assets/venasi_menjari.png',
     },
     'Melengkung': {
-      'image': Icons.eco,
       'title': 'Venasi Melengkung',
-      'desc': 'Tulang daun melengkung mengikuti tepi daun. Contoh: daun jambu.'
+      'explanation': 'Tulang daun melengkung mengikuti tepi daun 🌊',
+      'characteristics': [
+        'Tulang utama melengkung',
+        'Cabang mengikuti tepi daun',
+      ],
+      'asset': 'assets/venasi_melengkung.png',
     },
     'Sejajar': {
-      'image': Icons.spa,
       'title': 'Venasi Sejajar',
-      'desc': 'Tulang daun tersusun sejajar dari pangkal ke ujung. Contoh: daun pisang.'
+      'explanation': 'Tulang daun tersusun sejajar dari pangkal ke ujung 📏',
+      'characteristics': [
+        'Semua tulang daun sejajar',
+        'Bentuk lurus dari pangkal ke ujung',
+      ],
+      'asset': 'assets/venasi_sejajar.png',
     },
   };
-  final data = explanations[venasi] ?? {
-    'image': Icons.grass,
+  final ven = data[venasi] ?? {
     'title': venasi,
-    'desc': 'Penjelasan belum tersedia.'
+    'explanation': 'Penjelasan belum tersedia.',
+    'characteristics': <String>[],
+    'asset': '',
   };
-  showModalBottomSheet(
+  showVenationModal(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.38,
-      minChildSize: 0.25,
-      maxChildSize: 0.6,
-      expand: false,
-      builder: (_, controller) => Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 16,
-              offset: Offset(0, -4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: ListView(
-          controller: controller,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 18),
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            Center(
-              child: Icon(
-                data['image'] as IconData,
-                color: Color(0xFF00C853),
-                size: 54,
-              ),
-            ),
-            const SizedBox(height: 18),
-            Center(
-              child: Text(
-                data['title'] as String,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                data['desc'] as String,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+    venationType: venasi,
+    title: ven['title'] as String,
+    explanation: ven['explanation'] as String,
+    characteristics: List<String>.from(ven['characteristics'] as List),
+    illustrationAsset: ven['asset'] == null ? null : ven['asset'] as String,
+    // xpInfo: '+15 XP didapat 🎉', // aktifkan jika ingin tampilkan XP
+    // onListen: () {}, // aktifkan jika ingin fitur audio
   );
 }
 
@@ -446,8 +468,11 @@ class _SettingsMenuCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        print('Go to settings');
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -465,10 +490,8 @@ class _SettingsMenuCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Icon gear di kiri
             Icon(Icons.settings, color: Colors.black54, size: 28),
             const SizedBox(width: 16),
-            // Teks Pengaturan
             const Text(
               'Pengaturan',
               style: TextStyle(

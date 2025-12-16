@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/venation_modal.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -259,12 +260,67 @@ class _VenasiItem extends StatelessWidget {
   final _VenasiItemData item;
   const _VenasiItem({required this.item});
 
+  void _showVenationModal(BuildContext context) {
+    // Data child-friendly untuk setiap venasi
+    final data = {
+      'Menyirip': {
+        'title': 'Venasi Menyirip',
+        'explanation': 'Tulang daun menyebar ke samping seperti tulang ikan 🐟',
+        'characteristics': [
+          'Tulang utama di tengah',
+          'Cabang ke kanan dan kiri',
+          'Bentuk seperti sirip ikan',
+        ],
+        'asset': 'assets/menyirip.png',
+      },
+      'Menjari': {
+        'title': 'Venasi Menjari',
+        'explanation': 'Tulang daun menyebar dari satu titik seperti jari-jari tangan ✋',
+        'characteristics': [
+          'Tulang utama bercabang dari satu titik',
+          'Bentuk seperti jari tangan',
+        ],
+        'asset': 'assets/menjari.png',
+      },
+      'Melengkung': {
+        'title': 'Venasi Melengkung',
+        'explanation': 'Tulang daun melengkung mengikuti tepi daun 🌊',
+        'characteristics': [
+          'Tulang utama melengkung',
+          'Cabang mengikuti tepi daun',
+        ],
+        'asset': 'assets/melengkung.png',
+      },
+      'Sejajar': {
+        'title': 'Venasi Sejajar',
+        'explanation': 'Tulang daun tersusun sejajar dari pangkal ke ujung 📏',
+        'characteristics': [
+          'Semua tulang daun sejajar',
+          'Bentuk lurus dari pangkal ke ujung',
+        ],
+        'asset': 'assets/sejajar.png',
+      },
+    };
+    final ven = data[item.title] ?? {
+      'title': item.title,
+      'explanation': 'Penjelasan belum tersedia.',
+      'characteristics': <String>[],
+      'asset': '',
+    };
+    showVenationModal(
+      context: context,
+      venationType: item.title,
+      title: ven['title'] as String,
+      explanation: ven['explanation'] as String,
+      characteristics: List<String>.from(ven['characteristics'] as List),
+      illustrationAsset: ven['asset'] == null ? null : ven['asset'] as String,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        print('Venasi ${item.title} tapped');
-      },
+      onTap: () => _showVenationModal(context),
       child: Container(
         decoration: BoxDecoration(
           color: item.color,
