@@ -280,62 +280,165 @@ class LeafCollectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Placeholder gambar daun
-          Container(
-            height: 80,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(18),
-                topRight: Radius.circular(18),
+    return GestureDetector(
+      onTap: () => _showLeafExplanation(context, name, venasi),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Placeholder gambar daun
+            Container(
+              height: 80,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                ),
+              ),
+              child: const Icon(Icons.image, color: Colors.grey, size: 40),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    venasi,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: const Icon(Icons.image, color: Colors.grey, size: 40),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  venasi,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+void _showLeafExplanation(BuildContext context, String name, String venasi) {
+  final explanations = {
+    'Menyirip': {
+      'image': Icons.grass,
+      'title': 'Venasi Menyirip',
+      'desc': 'Tulang daun utama dengan cabang-cabang seperti sirip ikan. Contoh: daun mangga.'
+    },
+    'Menjari': {
+      'image': Icons.filter_vintage,
+      'title': 'Venasi Menjari',
+      'desc': 'Tulang daun menyebar dari satu titik seperti jari-jari tangan. Contoh: daun pepaya.'
+    },
+    'Melengkung': {
+      'image': Icons.eco,
+      'title': 'Venasi Melengkung',
+      'desc': 'Tulang daun melengkung mengikuti tepi daun. Contoh: daun jambu.'
+    },
+    'Sejajar': {
+      'image': Icons.spa,
+      'title': 'Venasi Sejajar',
+      'desc': 'Tulang daun tersusun sejajar dari pangkal ke ujung. Contoh: daun pisang.'
+    },
+  };
+  final data = explanations[venasi] ?? {
+    'image': Icons.grass,
+    'title': venasi,
+    'desc': 'Penjelasan belum tersedia.'
+  };
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => DraggableScrollableSheet(
+      initialChildSize: 0.38,
+      minChildSize: 0.25,
+      maxChildSize: 0.6,
+      expand: false,
+      builder: (_, controller) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 16,
+              offset: Offset(0, -4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ListView(
+          controller: controller,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 18),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+            Center(
+              child: Icon(
+                data['image'] as IconData,
+                color: Color(0xFF00C853),
+                size: 54,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Center(
+              child: Text(
+                data['title'] as String,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                data['desc'] as String,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 // Tombol menu Pengaturan
