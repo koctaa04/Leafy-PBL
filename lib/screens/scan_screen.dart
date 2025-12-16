@@ -1,8 +1,11 @@
 import 'dart:ui';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'leaf_result_screen.dart';
+import '../services/api_service.dart';
+import '../models/prediction_result.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -13,22 +16,161 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
   final ImagePicker _picker = ImagePicker();
+  bool _isProcessing = false;
+  String _selectedModel = 'svm'; // Default model
+
   Future<void> _pickFromGallery() async {
+    if (_isProcessing) return;
+    
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
-      // Navigasi ke halaman result dengan gambar asset (sementara)
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LeafResultScreen(
-            predictedType: 'Menyirip',
-            imagePath: null,
-            imageUrl: null,
-          ),
-        ),
-      );
-      // Untuk implementasi ke depan, gunakan picked.path sebagai imagePath
+      await _processImage(File(picked.path));
     }
+  }
+
+  Future<void> _takePicture() async {
+    if (_isProcessing || _controller == null) return;
+    
+    try {
+      setState(() => _isProcessing = true);
+      
+      final image = await _controller!.takePicture();
+      await _processImage(File(image.path));
+    } catch (e) {
+      _showErrorDialog('Gagal mengambil foto: ${e.toString()}');
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _processImage(File imageFile) async {
+    setState(() => _isProcessing = true);
+    
+    try {
+      // Tampilkan loading dialog
+      _showLoadingDialog();
+      
+      // Kirim ke API
+      final result = await ApiService.predictLeaf(
+        imageFile: imageFile,
+        model: _selectedModel,
+      );
+      
+      // Tutup loading dialog
+      Navigator.of(context).pop();
+      
+      if (result['success']) {
+        final predictionResult = PredictionResult.fromJson(result['data']);
+        
+        // Navigasi ke halaman result
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LeafResultScreen(
+              predictedType: predictionResult.predictionInIndonesian,
+              imagePath: imageFile.path,
+              imageUrl: null,
+              predictionResult: predictionResult,
+            ),
+          ),
+        );
+      } else {
+        _showErrorDialog(result['error']);
+      }
+    } catch (e) {
+      Navigator.of(context).pop(); // Tutup loading dialog
+      _showErrorDialog('Terjadi kesalahan: ${e.toString()}');
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Menganalisis daun...'),
+            SizedBox(height: 8),
+            Text(
+              'Menggunakan model ${_selectedModel.toUpperCase()}',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showModelSelector() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Pilih Model AI'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            RadioListTile<String>(
+              title: Text('SVM (Support Vector Machine)'),
+              subtitle: Text('Model klasifikasi yang akurat'),
+              value: 'svm',
+              groupValue: _selectedModel,
+              onChanged: (value) {
+                setState(() => _selectedModel = value!);
+                Navigator.of(context).pop();
+              },
+            ),
+            RadioListTile<String>(
+              title: Text('KNN (K-Nearest Neighbors)'),
+              subtitle: Text('Model berbasis kedekatan data'),
+              value: 'knn',
+              groupValue: _selectedModel,
+              onChanged: (value) {
+                setState(() => _selectedModel = value!);
+                Navigator.of(context).pop();
+              },
+            ),
+            RadioListTile<String>(
+              title: Text('Random Forest'),
+              subtitle: Text('Model ensemble yang robust'),
+              value: 'rf',
+              groupValue: _selectedModel,
+              onChanged: (value) {
+                setState(() => _selectedModel = value!);
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Batal'),
+          ),
+        ],
+      ),
+    );
   }
   CameraController? _controller;
   Future<void>? _initializeControllerFuture;
@@ -96,8 +238,6 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
     final scale = _frameScaleAnim?.value ?? 1.0;
     scanBoxWidth = size.width * 0.7 * scale;
     scanBoxHeight = size.height * 0.4 * scale;
-    final scanBoxLeft = (size.width - scanBoxWidth) / 2;
-    final scanBoxTop = (size.height - scanBoxHeight) / 2;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -160,6 +300,36 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                   tooltip: 'Tutup',
                 ),
               ),
+              // Tombol pilih model di kanan atas
+              Positioned(
+                top: padding.top + 12,
+                right: 12,
+                child: GestureDetector(
+                  onTap: _showModelSelector,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.settings, color: Colors.white, size: 16),
+                        SizedBox(width: 4),
+                        Text(
+                          _selectedModel.toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               // Teks instruksi di atas bingkai
               Positioned(
                 left: 0,
@@ -191,7 +361,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                       child: Material(
                         color: Colors.black.withOpacity(0.35),
                         child: InkWell(
-                          onTap: _pickFromGallery,
+                          onTap: _isProcessing ? null : _pickFromGallery,
                           borderRadius: BorderRadius.circular(18),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
@@ -225,7 +395,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                 right: 0,
                 child: Center(
                   child: GestureDetector(
-                    onTap: () async {
+                    onTap: _isProcessing ? null : () async {
                       if (_showScanAnim) return;
                       setState(() => _showScanAnim = true);
                       int repeatCount = 0;
@@ -235,17 +405,7 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                           if (repeatCount >= 2) {
                             _scanAnimController?.removeStatusListener(statusListener);
                             setState(() => _showScanAnim = false);
-                            // Navigasi ke halaman result dengan gambar asset (sementara)
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LeafResultScreen(
-                                  predictedType: 'Menyirip',
-                                  imagePath: null,
-                                  imageUrl: null,
-                                ),
-                              ),
-                            );
+                            _takePicture();
                             return;
                           }
                         }
@@ -253,8 +413,6 @@ class _ScanScreenState extends State<ScanScreen> with TickerProviderStateMixin {
                       _scanAnimController?.addStatusListener(statusListener);
                       await _scanAnimController?.forward(from: 0);
                       await _scanAnimController?.reverse();
-                      // _showScanAnim akan di-set false oleh statusListener
-                      // TODO: Navigasi ke halaman hasil scan di sini
                     },
                     child: Container(
                       width: 72,

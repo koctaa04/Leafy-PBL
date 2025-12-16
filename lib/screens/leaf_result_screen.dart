@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../models/prediction_result.dart';
 
 // Enum untuk model klasifikasi
 enum ClassificationModel { modelA, modelB, modelC }
@@ -74,12 +75,14 @@ class LeafResultScreen extends StatefulWidget {
   final String predictedType; // e.g. "Menyirip"
   final String? imagePath; // File path (local) atau null
   final String? imageUrl; // Network image url atau null
+  final dynamic predictionResult; // Tambahan untuk data dari API
 
   const LeafResultScreen({
     super.key,
     required this.predictedType,
     this.imagePath,
     this.imageUrl,
+    this.predictionResult,
   });
 
   @override
@@ -90,6 +93,14 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
   ClassificationModel selectedModel = ClassificationModel.modelA;
   final FlutterTts _tts = FlutterTts();
   bool _isPlaying = false;
+  
+  // Getter untuk mendapatkan PredictionResult dari widget
+  PredictionResult? get predictionResult {
+    if (widget.predictionResult != null && widget.predictionResult is PredictionResult) {
+      return widget.predictionResult as PredictionResult;
+    }
+    return null;
+  }
 
   VenationType get venationType {
     switch (widget.predictedType.toLowerCase()) {
@@ -217,7 +228,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.10),
+                              color: Colors.black.withValues(alpha: 0.10),
                               blurRadius: 18,
                               offset: const Offset(0, 8),
                             ),
@@ -241,52 +252,88 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                             : null,
                       ),
                       const SizedBox(height: 18),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Model Klasifikasi",
-                            style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.07),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                      // Tampilkan informasi model yang digunakan dari API
+                      if (predictionResult != null) ...[
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Model yang Digunakan",
+                              style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<ClassificationModel>(
-                                value: selectedModel,
+                            const SizedBox(height: 6),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
                                 borderRadius: BorderRadius.circular(16),
-                                isExpanded: true,
-                                icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                                items: ClassificationModel.values.map((model) {
-                                  return DropdownMenuItem(
-                                    value: model,
-                                    child: Text(getModelLabel(model), style: const TextStyle(fontWeight: FontWeight.w600)),
-                                  );
-                                }).toList(),
-                                onChanged: (model) {
-                                  if (model != null) {
-                                    setState(() {
-                                      selectedModel = model;
-                                      // TODO: Update hasil klasifikasi jika sudah terhubung ke model
-                                    });
-                                  }
-                                },
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.psychology, color: Colors.blue.shade600, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    predictionResult!.modelDisplayName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.blue.shade800,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ] else ...[
+                        // Fallback jika tidak ada data dari API
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Model Klasifikasi",
+                              style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.07),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<ClassificationModel>(
+                                  value: selectedModel,
+                                  borderRadius: BorderRadius.circular(16),
+                                  isExpanded: true,
+                                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                                  items: ClassificationModel.values.map((model) {
+                                    return DropdownMenuItem(
+                                      value: model,
+                                      child: Text(getModelLabel(model), style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (model) {
+                                    if (model != null) {
+                                      setState(() {
+                                        selectedModel = model;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 18),
                       Container(
                         padding: const EdgeInsets.all(18),
@@ -295,7 +342,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.green.withOpacity(0.08),
+                              color: Colors.green.withValues(alpha: 0.08),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -344,7 +391,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
+                              color: Colors.black.withValues(alpha: 0.06),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -363,7 +410,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              content.explanation,
+                              predictionResult?.description ?? content.explanation,
                               style: const TextStyle(fontSize: 15, color: Colors.black87),
                             ),
                             const SizedBox(height: 12),
@@ -374,7 +421,7 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                             const SizedBox(height: 6),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: content.features.map((f) {
+                              children: (predictionResult?.features ?? content.features).map((f) {
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 2),
                                   child: Row(
@@ -440,7 +487,12 @@ class _LeafResultScreenState extends State<LeafResultScreen> {
                               label: const Text("Simpan ke Koleksi"),
                               onPressed: () {
                                 // TODO: Integrasi simpan koleksi (misal ke Firebase)
-                                print('Saved to collection');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Fitur simpan koleksi akan segera tersedia'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
                               },
                             ),
                           ),
