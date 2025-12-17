@@ -60,7 +60,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'character': _selectedCharacter,
       }, SetOptions(merge: true));
       setState(() { _saving = false; });
+      if (!mounted) return;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Berhasil'),
+          content: const Text('Perubahan profil berhasil disimpan.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      // Setelah OK, kembali ke Profile dan trigger reload
       if (mounted) Navigator.pop(context, true);
+      // Jika pakai named route '/profile', bisa pakai pushReplacementNamed jika perlu reload penuh
     } catch (e) {
       setState(() {
         _saving = false;
@@ -225,7 +243,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           child: _saving
                               ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                         ),
                       ),
                     ],

@@ -17,8 +17,21 @@ Future<void> updateCharacter(String characterName) async {
       .set({'character': characterName}, SetOptions(merge: true));
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Key _profileKey = UniqueKey();
+
+  void _reloadProfile() {
+    setState(() {
+      _profileKey = UniqueKey();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +53,7 @@ class ProfileScreen extends StatelessWidget {
                 children: [
                   _TopBar(),
                   const SizedBox(height: 18),
-                  _ProfileHeroCard(),
+                  _ProfileHeroCard(key: _profileKey),
                   const SizedBox(height: 22),
                   _BadgeCollectionRow(),
                   const SizedBox(height: 28),
@@ -60,7 +73,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _LeafCollectionGrid(),
                   const SizedBox(height: 24),
-                  _SettingsMenuCard(),
+                  _SettingsMenuCard(onProfileChanged: _reloadProfile),
                   const SizedBox(height: 14),
                   _LogoutMenuCard(),
                   const SizedBox(height: 24),
@@ -76,6 +89,8 @@ class ProfileScreen extends StatelessWidget {
 
 // Hero Card: karakter, nama, status, XP, info rules XP
 class _ProfileHeroCard extends StatefulWidget {
+  const _ProfileHeroCard({Key? key}) : super(key: key);
+
   @override
   State<_ProfileHeroCard> createState() => _ProfileHeroCardState();
 }
@@ -824,14 +839,20 @@ void _showLeafExplanation(BuildContext context, String name, String venasi) {
 
 // Tombol menu Pengaturan
 class _SettingsMenuCard extends StatelessWidget {
+  final VoidCallback? onProfileChanged;
+  const _SettingsMenuCard({this.onProfileChanged});
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        await Navigator.push(
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
         );
+        if (result == true && onProfileChanged != null) {
+          onProfileChanged!();
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
