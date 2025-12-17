@@ -25,48 +25,54 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             child: SafeArea(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: Padding(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Static header card
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Floating card header
-                        _HeaderCard(),
-                        const SizedBox(height: 18),
-                        // Card Belajar Tentang Daun
-                        _BelajarCard(),
-                        const SizedBox(height: 24),
-                        // Judul section venasi
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4.0),
-                          child: Text(
-                            '4 Jenis Venasi Daun',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                    child: _HeaderCard(),
+                  ),
+                  const SizedBox(height: 8),
+                  // Scrollable content below header
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Card Belajar Tentang Daun
+                            _BelajarCard(),
+                            const SizedBox(height: 24),
+                            // Judul section venasi
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 4.0),
+                              child: Text(
+                                '4 Jenis Venasi Daun',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            // Grid venasi daun
+                            _VenasiGrid(),
+                            const SizedBox(height: 28),
+                            // Tombol Scan Daun
+                            Center(child: _ScanDaunButton()),
+                            const SizedBox(height: 32),
+                            // Card Prestasi
+                            _PrestasiCard(),
+                            const SizedBox(height: 24),
+                          ],
                         ),
-                        const SizedBox(height: 16),
-                        // Grid venasi daun
-                        _VenasiGrid(),
-                        const SizedBox(height: 28),
-                        // Tombol Scan Daun
-                        Center(child: _ScanDaunButton()),
-                        const SizedBox(height: 32),
-                        // Card Prestasi
-                        _PrestasiCard(),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           );
