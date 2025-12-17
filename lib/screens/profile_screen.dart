@@ -51,14 +51,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _TopBar(),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        tooltip: 'Kembali',
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Profil Saya',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 48), // Spacer agar judul tetap di tengah
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   _ProfileHeroCard(key: _profileKey),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 18),
                   _BadgeCollectionRow(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 48),
                   _StatsRow(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text(
@@ -70,13 +94,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _LeafCollectionGrid(),
-                  const SizedBox(height: 24),
-                  _SettingsMenuCard(onProfileChanged: _reloadProfile),
                   const SizedBox(height: 14),
+                  _LeafCollectionGrid(),
+                  const SizedBox(height: 20),
+                  _SettingsMenuCard(onProfileChanged: _reloadProfile),
+                  const SizedBox(height: 10),
                   _LogoutMenuCard(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -176,7 +200,7 @@ class _ProfileHeroCardState extends State<_ProfileHeroCard> {
       children: [
         Container(
           width: double.infinity,
-          margin: const EdgeInsets.only(top: 90), // sedikit lebih turun agar proporsional
+          margin: const EdgeInsets.only(top: 70), // sedikit lebih turun agar proporsional
           padding: const EdgeInsets.only(top: 12, left: 18, right: 18, bottom: 24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -287,7 +311,7 @@ class _ProfileHeroCardState extends State<_ProfileHeroCard> {
         ),
         // Karakter kartun overlap di atas kartu (tanpa shadow)
         Positioned(
-          top: 0,
+          top: -20, // lebih ke atas
           left: 0,
           right: 0,
           child: Center(
@@ -375,10 +399,10 @@ class _BadgeCollectionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badges = [
-      {'icon': 'assets/Badge1.png', 'label': 'Pemula', 'earned': true},
-      {'icon': 'assets/Badge2.png', 'label': 'Penjelajah', 'earned': false},
-      {'icon': 'assets/Badge3.png', 'label': 'Ahli', 'earned': false},
-      {'icon': 'assets/Badge4.png', 'label': 'Master', 'earned': false},
+      {'icon': 'assets/Badge-Level/junior.png', 'label': 'Pemula Daun', 'earned': true},
+      {'icon': 'assets/Badge-Level/penjelajah-muda.png', 'label': 'Penjelajah Muda', 'earned': false},
+      {'icon': 'assets/Badge-Level/penjelajah-andal.png', 'label': 'Penjelajah Andal', 'earned': false},
+      {'icon': 'assets/Badge-Level/master-daun.png', 'label': 'Master Daun', 'earned': false},
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,53 +429,52 @@ class _BadgeCollectionRow extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 80,
+          height: 140,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: badges.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 18),
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final badge = badges[i];
               final earned = badge['earned'] as bool;
+              // Pisahkan label menjadi dua baris jika ada dua kata
+              final label = badge['label'] as String;
+              final labelLines = label.split(' ').length > 1 ? label.split(' ') : [label];
               return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: earned ? Colors.white : Colors.grey[200],
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: earned ? Color(0xFF00C853) : Colors.grey[400]!,
-                        width: 2,
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Image.asset(
-                        badge['icon'] as String,
-                        fit: BoxFit.contain,
-                        color: earned ? null : Colors.grey[400],
-                        errorBuilder: (context, error, stackTrace) => Icon(Icons.emoji_events, color: earned ? Color(0xFF00C853) : Colors.grey[400], size: 32),
-                      ),
-                    ),
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: earned
+                        ? Image.asset(
+                            badge['icon'] as String,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(Icons.emoji_events, color: Color(0xFF00C853), size: 56),
+                          )
+                        : ColorFiltered(
+                            colorFilter: const ColorFilter.matrix(<double>[
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0.2126, 0.7152, 0.0722, 0, 0,
+                              0, 0, 0, 1, 0,
+                            ]),
+                            child: Image.asset(
+                              badge['icon'] as String,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => Icon(Icons.emoji_events, color: Colors.grey[400], size: 56),
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    badge['label'] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: earned ? Colors.black87 : Colors.grey,
-                    ),
-                  ),
+                  ...labelLines.map((line) => Text(
+                        line,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: earned ? Colors.black87 : Colors.grey,
+                        ),
+                      )),
                 ],
               );
             },
@@ -537,7 +560,7 @@ class _StatsRow extends StatelessWidget {
       children: const [
         _StatCard(
           value: '12',
-          label: 'Daun Terscan',
+          label: 'Scan Daun',
           color: Color(0xFFC8E6C9),
           iconAsset: 'assets/Icon/Daun-Terscan.png',
         ),
@@ -551,7 +574,7 @@ class _StatsRow extends StatelessWidget {
           value: '4',
           label: 'Peringkat',
           color: Color(0xFFBBDEFB),
-          iconAsset: 'assets/Icon/Badge-Master-Daun-lv10.png',
+          iconAsset: 'assets/Icon/Peringkat.png',
         ),
       ],
     );
@@ -567,49 +590,75 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 90,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 4),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 120,
+          padding: const EdgeInsets.only(top: 32, bottom: 16, left: 8, right: 8),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Image.asset(
-            iconAsset,
-            width: 32,
-            height: 32,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.emoji_events, size: 32, color: Colors.grey),
+          child: Column(
+            children: [
+              const SizedBox(height: 8), // Spacer for overlap
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+        ),
+        Positioned(
+          top: -28,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(6),
+              child: Image.asset(
+                iconAsset,
+                width: 48,
+                height: 48,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.emoji_events, size: 48, color: Colors.grey),
+              ),
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
