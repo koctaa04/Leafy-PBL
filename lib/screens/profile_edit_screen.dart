@@ -271,7 +271,7 @@ class _BottomSheetPicker extends StatelessWidget {
               controller: FixedExtentScrollController(initialItem: selectedIndex),
               onSelectedItemChanged: (i) {},
               childDelegate: ListWheelChildBuilderDelegate(
-                builder: (ctx, i) => i == null || i < 0 || i >= items.length
+                builder: (ctx, i) => i < 0 || i >= items.length
                     ? null
                     : Center(
                         child: Text(

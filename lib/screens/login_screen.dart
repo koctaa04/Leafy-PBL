@@ -55,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
       Navigator.pushReplacementNamed(context, '/home');
-    } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException {
       setState(() {
         _isLoading = false;
         // Always show user-friendly error for login failure

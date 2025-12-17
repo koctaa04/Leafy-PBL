@@ -10,7 +10,7 @@ class _BadgeCollectionRow extends StatelessWidget {
     _BadgeData('assets/Badge Bidang Keahlian/Badge-Ahli-Menyirip.png', true),
   ];
 
-  const _BadgeCollectionRow({super.key});
+  const _BadgeCollectionRow();
 
   @override
   Widget build(BuildContext context) {
