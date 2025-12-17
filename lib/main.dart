@@ -22,8 +22,10 @@ void main() async {
   runApp(const LeafyApp());
 }
 
+
 class LeafyApp extends StatelessWidget {
   const LeafyApp({super.key});
+
 
   @override
   Widget build(BuildContext context) {
