@@ -1,11 +1,21 @@
-import '../widgets/venation_modal.dart';
-import 'settings_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import '../utils/level_utils.dart';
+import '../widgets/venation_modal.dart';
+import 'settings_screen.dart';
+
+// Fungsi untuk update karakter user di Firestore
+Future<void> updateCharacter(String characterName) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+  await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .set({'character': characterName}, SetOptions(merge: true));
+}
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -14,18 +24,11 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE8F5E9),
-              Color(0xFFB3E5FC),
-            ],
-          ),
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(32),
-            bottom: Radius.circular(32),
+            colors: [Color(0xFFE8F5E9), Color(0xFFB3E5FC)],
           ),
         ),
         child: SafeArea(
@@ -35,16 +38,14 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Bar atas dengan tombol kembali
                   _TopBar(),
                   const SizedBox(height: 18),
-                  // Kartu profil besar
-                  _ProfileCard(),
-                  const SizedBox(height: 18),
-                  // Statistik horizontal
+                  _ProfileHeroCard(),
+                  const SizedBox(height: 22),
+                  _BadgeCollectionRow(),
+                  const SizedBox(height: 28),
                   _StatsRow(),
                   const SizedBox(height: 28),
-                  // Judul Koleksi Daun
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 4.0),
                     child: Text(
@@ -57,13 +58,10 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Grid/list koleksi daun
                   _LeafCollectionGrid(),
                   const SizedBox(height: 24),
-                  // Tombol menu Pengaturan
                   _SettingsMenuCard(),
                   const SizedBox(height: 14),
-                  // Tombol menu Keluar
                   _LogoutMenuCard(),
                   const SizedBox(height: 24),
                 ],
@@ -71,6 +69,388 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Hero Card: karakter, nama, status, XP, info rules XP
+class _ProfileHeroCard extends StatefulWidget {
+  @override
+  State<_ProfileHeroCard> createState() => _ProfileHeroCardState();
+}
+
+class _ProfileHeroCardState extends State<_ProfileHeroCard> {
+  UserProfile? _profile;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
+    try {
+      final docRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final doc = await docRef.get();
+      Map<String, dynamic> data = doc.data() ?? {};
+      // Jika field character belum ada, set default ke 'Lumi' di database
+      if (!data.containsKey('character') || data['character'] == null || (data['character'] as String).isEmpty) {
+        await docRef.set({'character': 'Lumi'}, SetOptions(merge: true));
+        data['character'] = 'Lumi';
+      }
+      setState(() {
+        _profile = doc.exists ? UserProfile.fromFirestore(doc) : UserProfile(uid: user.uid, displayName: user.displayName ?? 'Pengguna', email: user.email, character: 'Lumi');
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final name = _profile?.displayName ?? 'Pengguna';
+    final xp = _profile?.xp ?? 0;
+    final levelInfo = getLevelInfo(xp);
+    final level = levelInfo.level;
+    final minXp = levelInfo.minXp;
+    final maxXp = levelInfo.maxXp;
+    final progress = levelInfo.isMax ? 1.0 : ((xp - minXp) / (levelInfo.xpToNext));
+    final character = (_profile?.character ?? 'Lumi').trim();
+    // Default asset: E:/leafy/assets/Character/Lumi.png (pakai path relatif untuk Flutter asset)
+    final characterAsset = 'assets/Character/${character.isEmpty ? 'Lumi' : character[0].toUpperCase() + character.substring(1)}.png';
+    final statusLabel = levelInfo.isMax
+        ? '🏆 Master Daun'
+        : level >= 7 ? '🌳 Penjelajah Daun'
+        : level >= 4 ? '🍃 Penjelajah Muda'
+        : '🌱 Pemula Daun';
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(top: 90), // sedikit lebih turun agar proporsional
+          padding: const EdgeInsets.only(top: 12, left: 18, right: 18, bottom: 24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFE8F5E9), Color(0xFFB3E5FC)],
+            ),
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 18,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              // Jarak karakter ke nama user diperbesar
+              const SizedBox(height: 80),
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 10), // jarak nama ke status
+              // Status chip
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Color(0xFFE0F2F1),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Text(
+                  statusLabel,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF388E3C)),
+                ),
+              ),
+              const SizedBox(height: 16), // jarak status ke XP
+              // XP progress bar
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('$xp XP / $maxXp XP', style: const TextStyle(fontSize: 15, color: Colors.black87)),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showXpRulesModal(context),
+                    child: const Icon(Icons.info_outline, size: 18, color: Colors.blueAccent),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10), // jarak XP ke progress bar
+              // Progress bar dengan indikator lingkaran
+              SizedBox(
+                height: 24,
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Container(
+                      height: 14,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF00C853), Color(0xFFFFF176)],
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: progress.clamp(0.0, 1.0),
+                          minHeight: 14,
+                          backgroundColor: Colors.transparent,
+                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.transparent),
+                        ),
+                      ),
+                    ),
+                    // Indikator lingkaran posisi XP
+                    Positioned(
+                      left: (progress.clamp(0.0, 1.0)) * (MediaQuery.of(context).size.width - 56 - 24),
+                      child: Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Color(0xFF00C853), width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(Icons.star, color: Color(0xFF00C853), size: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Karakter kartun overlap di atas kartu (tanpa shadow)
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: AnimatedScale(
+              scale: 1.0,
+              duration: const Duration(milliseconds: 300),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(90),
+                child: Image.asset(
+                  characterAsset,
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const CircleAvatar(
+                    radius: 100,
+                    backgroundColor: Color(0xFF00C853),
+                    child: Icon(Icons.pets, size: 100, color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showXpRulesModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.only(top: 18, left: 18, right: 18, bottom: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 48,
+              height: 6,
+              margin: const EdgeInsets.only(bottom: 18),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const Text(
+              'Cara Mendapatkan XP',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+            ),
+            const SizedBox(height: 18),
+            _XpRuleRow(icon: '🌱', text: 'Belajar tentang daun: +25 XP (1x saja)'),
+            _XpRuleRow(icon: '📸', text: 'Scan / upload daun: +25 XP'),
+            _XpRuleRow(icon: '🎁', text: 'Bonus scan pertama: +35 XP'),
+            _XpRuleRow(icon: '🧠', text: 'Dengar penjelasan: +10 XP'),
+            const SizedBox(height: 10),
+            const Text(
+              'XP belajar dan penjelasan hanya bisa diklaim sekali',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF00C853),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text('Mengerti', style: TextStyle(fontSize: 16, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Baris koleksi badge horizontal
+class _BadgeCollectionRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final badges = [
+      {'icon': 'assets/Badge1.png', 'label': 'Pemula', 'earned': true},
+      {'icon': 'assets/Badge2.png', 'label': 'Penjelajah', 'earned': false},
+      {'icon': 'assets/Badge3.png', 'label': 'Ahli', 'earned': false},
+      {'icon': 'assets/Badge4.png', 'label': 'Master', 'earned': false},
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Prestasi Kamu',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: const Text('Lihat Semua', style: TextStyle(fontSize: 14, color: Color(0xFF00C853), fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: badges.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 18),
+            itemBuilder: (context, i) {
+              final badge = badges[i];
+              final earned = badge['earned'] as bool;
+              return Column(
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: earned ? Colors.white : Colors.grey[200],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: earned ? Color(0xFF00C853) : Colors.grey[400]!,
+                        width: 2,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Image.asset(
+                        badge['icon'] as String,
+                        fit: BoxFit.contain,
+                        color: earned ? null : Colors.grey[400],
+                        errorBuilder: (context, error, stackTrace) => Icon(Icons.emoji_events, color: earned ? Color(0xFF00C853) : Colors.grey[400], size: 32),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    badge['label'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: earned ? Colors.black87 : Colors.grey,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// Baris aturan XP
+class _XpRuleRow extends StatelessWidget {
+  final String icon;
+  final String text;
+  const _XpRuleRow({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 15, color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -115,131 +495,6 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// Kartu profil besar
-class _ProfileCard extends StatefulWidget {
-  @override
-  State<_ProfileCard> createState() => _ProfileCardState();
-}
-
-class _ProfileCardState extends State<_ProfileCard> {
-  UserProfile? _profile;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchProfile();
-  }
-
-  Future<void> _fetchProfile() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      setState(() {
-        _loading = false;
-      });
-      return;
-    }
-    try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      setState(() {
-        _profile = doc.exists ? UserProfile.fromFirestore(doc) : UserProfile(uid: user.uid, displayName: user.displayName ?? 'Pengguna', email: user.email);
-        _loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _loading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    final name = _profile?.displayName ?? 'Pengguna';
-    final bio = _profile?.bio ?? 'Belum ada biodata.';
-    final xp = _profile?.xp ?? 0;
-    final levelInfo = getLevelInfo(xp);
-    final level = levelInfo.level;
-    final xpToNext = levelInfo.isMax ? 0 : levelInfo.xpToNext;
-    final minXp = levelInfo.minXp;
-    final maxXp = levelInfo.maxXp;
-    final progress = levelInfo.isMax ? 1.0 : ((xp - minXp) / (levelInfo.xpToNext));
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Avatar bundar
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: const Color(0xFF00C853),
-            child: const Icon(Icons.pets, size: 40, color: Colors.white),
-          ),
-          const SizedBox(height: 16),
-          // Nama
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Biodata
-          Text(
-            bio,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          // Subteks level
-          Text(
-            levelInfo.isMax ? 'Level 10 · Master Daun' : 'Level $level',
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 18),
-          // Progress bar XP
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('$xp XP', style: const TextStyle(fontSize: 13, color: Colors.black54)),
-              Text(levelInfo.isMax ? 'MAX' : '${maxXp} XP', style: const TextStyle(fontSize: 13, color: Colors.black54)),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 10,
-              backgroundColor: const Color(0xFFE0E0E0),
-              valueColor: const AlwaysStoppedAnimation(Color(0xFF00C853)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // Statistik horizontal
 class _StatsRow extends StatelessWidget {
@@ -248,9 +503,24 @@ class _StatsRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: const [
-        _StatCard(value: '12', label: 'Daun Terscan', color: Color(0xFFC8E6C9)),
-        _StatCard(value: '8', label: 'Medali', color: Color(0xFFFFF9C4)),
-        _StatCard(value: '4', label: 'Peringkat', color: Color(0xFFBBDEFB)),
+        _StatCard(
+          value: '12',
+          label: 'Daun Terscan',
+          color: Color(0xFFC8E6C9),
+          iconAsset: 'assets/Icon/Daun-Terscan.png',
+        ),
+        _StatCard(
+          value: '8',
+          label: 'Medali',
+          color: Color(0xFFFFF9C4),
+          iconAsset: 'assets/Icon/Medali.png',
+        ),
+        _StatCard(
+          value: '4',
+          label: 'Peringkat',
+          color: Color(0xFFBBDEFB),
+          iconAsset: 'assets/Icon/Badge-Master-Daun-lv10.png',
+        ),
       ],
     );
   }
@@ -260,13 +530,14 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
-  const _StatCard({required this.value, required this.label, required this.color});
+  final String iconAsset;
+  const _StatCard({required this.value, required this.label, required this.color, required this.iconAsset});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 90,
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(18),
@@ -280,6 +551,14 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
+          Image.asset(
+            iconAsset,
+            width: 32,
+            height: 32,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const Icon(Icons.emoji_events, size: 32, color: Colors.grey),
+          ),
+          const SizedBox(height: 6),
           Text(
             value,
             style: const TextStyle(
@@ -288,7 +567,7 @@ class _StatCard extends StatelessWidget {
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
@@ -305,18 +584,81 @@ class _StatCard extends StatelessWidget {
 
 // Grid/list koleksi daun
 class _LeafCollectionGrid extends StatelessWidget {
+  // TODO: Ganti dengan koleksi daun dari database user
   final List<Map<String, String>> leaves = const [
-    {'name': 'Daun Mangga', 'venasi': 'Menyirip'},
-    {'name': 'Daun Jambu', 'venasi': 'Melengkung'},
-    {'name': 'Daun Pisang', 'venasi': 'Sejajar'},
-    {'name': 'Daun Pepaya', 'venasi': 'Menjari'},
+    // Contoh data, ganti dengan data dari database
+    // {'name': 'Daun Mangga', 'venasi': 'Menyirip'},
+    // {'name': 'Daun Jambu', 'venasi': 'Melengkung'},
+    // {'name': 'Daun Pisang', 'venasi': 'Sejajar'},
+    // {'name': 'Daun Pepaya', 'venasi': 'Menjari'},
   ];
 
   @override
   Widget build(BuildContext context) {
+    if (leaves.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 14,
+                offset: Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                'assets/daun-3d.jpg',
+                width: 90,
+                height: 90,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.eco, color: Colors.green, size: 64),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Belum ada koleksi daun',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Ayo scan daun pertamamu untuk mulai petualangan!',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/scan');
+                  },
+                  icon: const Icon(Icons.camera_alt, size: 22),
+                  label: const Text('Scan Daun Sekarang', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00C853),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return GridView.builder(
       shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: 16,

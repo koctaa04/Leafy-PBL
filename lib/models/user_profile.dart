@@ -8,6 +8,7 @@ class UserProfile {
   final int level;
   final int xp;
   final String? role;
+  final String? character;
 
   UserProfile({
     required this.uid,
@@ -17,6 +18,7 @@ class UserProfile {
     this.level = 1,
     this.xp = 0,
     this.role,
+    this.character,
   });
 
   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
@@ -29,6 +31,7 @@ class UserProfile {
       level: data?['level'] as int? ?? 1,
       xp: data?['xp'] as int? ?? 0,
       role: data?['role'] as String?,
+      character: data?['character'] as String?,
     );
   }
 }
