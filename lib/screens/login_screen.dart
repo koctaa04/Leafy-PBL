@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 32),
                     const Text(
-                      'Masuk ke LeafLearn',
+                      'Masuk ke Leafy',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 24,

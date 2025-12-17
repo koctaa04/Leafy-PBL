@@ -19,11 +19,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const LeafLearnApp());
+  runApp(const LeafyApp());
 }
 
-class LeafLearnApp extends StatelessWidget {
-  const LeafLearnApp({super.key});
+class LeafyApp extends StatelessWidget {
+  const LeafyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
