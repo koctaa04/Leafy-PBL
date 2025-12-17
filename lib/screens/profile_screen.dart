@@ -107,8 +107,26 @@ class _ProfileHeroCardState extends State<_ProfileHeroCard> {
         await docRef.set({'character': 'Lumi'}, SetOptions(merge: true));
         data['character'] = 'Lumi';
       }
+      // Pastikan displayName selalu dari Firestore, fallback ke email, lalu 'Pengguna'
+      String displayName = (data['displayName'] as String?)?.trim() ?? '';
+      if (displayName.isEmpty) {
+        displayName = (user.email ?? '').trim();
+      }
+      if (displayName.isEmpty) {
+        displayName = 'Pengguna';
+      }
       setState(() {
-        _profile = doc.exists ? UserProfile.fromFirestore(doc) : UserProfile(uid: user.uid, displayName: user.displayName ?? 'Pengguna', email: user.email, character: 'Lumi');
+        _profile = doc.exists
+          ? UserProfile(
+            uid: user.uid,
+            displayName: displayName,
+            email: user.email,
+            character: data['character'] ?? 'Lumi',
+            xp: data['xp'] ?? 0,
+            scanCount: data['scanCount'] ?? 0,
+            badges: data['badges'] ?? [],
+          )
+          : UserProfile(uid: user.uid, displayName: displayName, email: user.email, character: 'Lumi');
         _loading = false;
       });
     } catch (e) {
@@ -271,7 +289,6 @@ class _ProfileHeroCardState extends State<_ProfileHeroCard> {
                   errorBuilder: (context, error, stackTrace) => const CircleAvatar(
                     radius: 100,
                     backgroundColor: Color(0xFF00C853),
-                    child: Icon(Icons.pets, size: 100, color: Colors.white),
                   ),
                 ),
               ),

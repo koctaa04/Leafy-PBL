@@ -9,6 +9,8 @@ class UserProfile {
   final int xp;
   final String? role;
   final String? character;
+  final int scanCount;
+  final List<dynamic> badges;
 
   UserProfile({
     required this.uid,
@@ -19,6 +21,8 @@ class UserProfile {
     this.xp = 0,
     this.role,
     this.character,
+    this.scanCount = 0,
+    this.badges = const [],
   });
 
   factory UserProfile.fromFirestore(DocumentSnapshot doc) {
@@ -32,6 +36,8 @@ class UserProfile {
       xp: data?['xp'] as int? ?? 0,
       role: data?['role'] as String?,
       character: data?['character'] as String?,
+      scanCount: data?['scanCount'] as int? ?? 0,
+      badges: data?['badges'] as List<dynamic>? ?? const [],
     );
   }
 }

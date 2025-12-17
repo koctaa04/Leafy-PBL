@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/ensure_user_doc.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -125,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 32),
                   Image.asset(
-                    'assets/logo-leafy.png',
+                    'assets/Lumi.png',
                     width: 56,
                     height: 56,
                     fit: BoxFit.contain,
@@ -352,6 +354,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
                             );
+                            await ensureUserDoc();
                             // Sukses daftar, bisa simpan username ke Firestore jika perlu
                             if (context.mounted) {
                               Navigator.pop(context);

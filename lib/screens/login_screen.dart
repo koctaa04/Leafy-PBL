@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import '../utils/ensure_user_doc.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -51,6 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      await ensureUserDoc();
       setState(() {
         _isLoading = false;
       });
