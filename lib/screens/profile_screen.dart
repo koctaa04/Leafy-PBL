@@ -552,28 +552,77 @@ class _TopBar extends StatelessWidget {
 
 
 // Statistik horizontal
-class _StatsRow extends StatelessWidget {
+class _StatsRow extends StatefulWidget {
+  @override
+  State<_StatsRow> createState() => _StatsRowState();
+}
+
+class _StatsRowState extends State<_StatsRow> {
+  int scanCount = 0;
+  int medalCount = 0;
+  int rank = 0;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+  }
+
+  Future<void> _fetchStats() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() {
+        _loading = false;
+      });
+      return;
+    }
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final data = doc.data() ?? {};
+      scanCount = data['scanCount'] ?? 0;
+      final badges = data['badges'] as List?;
+      medalCount = badges?.length ?? 0;
+
+      // Hitung peringkat user berdasarkan XP (semua user, urutkan desc)
+      final usersSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .orderBy('xp', descending: true)
+          .get();
+      final userList = usersSnap.docs;
+      rank = userList.indexWhere((d) => d.id == user.uid) + 1;
+    } catch (e) {
+      // fallback ke 0
+    }
+    setState(() {
+      _loading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
+      children: [
         _StatCard(
-          value: '12',
+          value: scanCount.toString(),
           label: 'Scan Daun',
-          color: Color(0xFFC8E6C9),
+          color: const Color(0xFFC8E6C9),
           iconAsset: 'assets/Icon/Daun-Terscan.png',
         ),
         _StatCard(
-          value: '8',
+          value: medalCount.toString(),
           label: 'Medali',
-          color: Color(0xFFFFF9C4),
+          color: const Color(0xFFFFF9C4),
           iconAsset: 'assets/Icon/Medali.png',
         ),
         _StatCard(
-          value: '4',
+          value: rank > 0 ? rank.toString() : '-',
           label: 'Peringkat',
-          color: Color(0xFFBBDEFB),
+          color: const Color(0xFFBBDEFB),
           iconAsset: 'assets/Icon/Peringkat.png',
         ),
       ],
