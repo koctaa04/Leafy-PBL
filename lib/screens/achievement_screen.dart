@@ -11,21 +11,30 @@ class AchievementScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8FA),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // App bar custom dengan tombol kembali dan judul
-                _CustomAppBar(),
-                const SizedBox(height: 24),
-                // Section Peringkat
-                _RankingSection(),
-                const SizedBox(height: 32),
-                // Section Medali & Pencapaian
-                _MedalSection(),
-              ],
+        child: RefreshIndicator(
+          onRefresh: () async {
+            // Gunakan GlobalKey untuk akses state RankingSection
+            _rankingSectionKey.currentState?.refreshLeaderboard();
+            // Jika ingin refresh juga medali, tambahkan key dan method serupa
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // App bar custom dengan tombol kembali dan judul
+                  _CustomAppBar(),
+                  const SizedBox(height: 24),
+                  // Section Peringkat
+                  _RankingSection(key: _rankingSectionKey),
+                  const SizedBox(height: 32),
+                  // Section Medali & Pencapaian
+                  _MedalSection(),
+                ],
+              ),
             ),
           ),
         ),
@@ -76,11 +85,17 @@ class _CustomAppBar extends StatelessWidget {
 }
 
 class _RankingSection extends StatefulWidget {
+  const _RankingSection({Key? key}) : super(key: key);
   @override
   State<_RankingSection> createState() => _RankingSectionState();
 }
+// Tambahkan GlobalKey untuk akses state RankingSection
+final GlobalKey<_RankingSectionState> _rankingSectionKey = GlobalKey<_RankingSectionState>();
 
 class _RankingSectionState extends State<_RankingSection> {
+    Future<void> refreshLeaderboard() async {
+      await _fetchLeaderboard();
+    }
   List<UserProfile> leaderboard = [];
   bool loading = true;
 
@@ -270,14 +285,45 @@ class RankingItem extends StatelessWidget {
 }
 
 // Section Medali & Pencapaian
-class _MedalSection extends StatelessWidget {
-  final List<_MedalData> medals = const [
-    _MedalData('Pemula', Icons.star_border, Color(0xFFB0BEC5)),
-    _MedalData('10 Daun', Icons.eco, Color(0xFF00C853)),
-    _MedalData('Penjelajah', Icons.explore, Color(0xFFFFD600)),
-    _MedalData('Ahli Venasi', Icons.account_tree, Color(0xFF90CAF9)),
-    _MedalData('Kolektor', Icons.collections, Color(0xFFE1BEE7)),
+class _MedalSection extends StatefulWidget {
+  const _MedalSection({Key? key}) : super(key: key);
+  @override
+  State<_MedalSection> createState() => _MedalSectionState();
+}
+
+class _MedalSectionState extends State<_MedalSection> {
+  // Daftar semua badge yang tersedia (bisa juga diambil dari Firestore jika ingin remote)
+  final List<_MedalData> allBadges = const [
+    _MedalData('Pemula', Icons.star_border, Color(0xFFB0BEC5), 'pemula'),
+    _MedalData('10 Daun', Icons.eco, Color(0xFF00C853), '10daun'),
+    _MedalData('Penjelajah', Icons.explore, Color(0xFFFFD600), 'penjelajah'),
+    _MedalData('Ahli Venasi', Icons.account_tree, Color(0xFF90CAF9), 'venasi'),
+    _MedalData('Kolektor', Icons.collections, Color(0xFFE1BEE7), 'kolektor'),
   ];
+  List<dynamic> userBadges = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserBadges();
+  }
+
+  Future<void> _fetchUserBadges() async {
+    setState(() { loading = true; });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      setState(() { loading = false; });
+      return;
+    }
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      userBadges = userDoc.data()?['badges'] ?? [];
+    } catch (e) {
+      userBadges = [];
+    }
+    setState(() { loading = false; });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -293,16 +339,22 @@ class _MedalSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // Grid medali
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: medals.map((data) => MedalItem(
-            name: data.name,
-            icon: data.icon,
-            color: data.color,
-          )).toList(),
-        ),
+        if (loading)
+          const Center(child: CircularProgressIndicator()),
+        if (!loading)
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: allBadges.map((badge) {
+              final owned = userBadges.contains(badge.id);
+              return MedalItem(
+                name: badge.name,
+                icon: badge.icon,
+                color: owned ? badge.color : Colors.grey[400]!,
+                owned: owned,
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -312,14 +364,16 @@ class _MedalData {
   final String name;
   final IconData icon;
   final Color color;
-  const _MedalData(this.name, this.icon, this.color);
+  final String id;
+  const _MedalData(this.name, this.icon, this.color, this.id);
 }
 
 class MedalItem extends StatelessWidget {
   final String name;
   final IconData icon;
   final Color color;
-  const MedalItem({super.key, required this.name, required this.icon, required this.color});
+  final bool owned;
+  const MedalItem({super.key, required this.name, required this.icon, required this.color, this.owned = false});
 
   @override
   Widget build(BuildContext context) {
@@ -345,10 +399,10 @@ class MedalItem extends StatelessWidget {
           Text(
             name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: owned ? Colors.black87 : Colors.grey,
             ),
           ),
         ],

@@ -128,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   const SizedBox(height: 32),
                   Image.asset(
-                    'assets/Lumi.png',
+                    'assets/logo-leafy.png',
                     width: 56,
                     height: 56,
                     fit: BoxFit.contain,
@@ -355,13 +355,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               email: _emailController.text.trim(),
                               password: _passwordController.text.trim(),
                             );
-                            // Set displayName ke username
+                            // Set displayName ke username di Auth
                             final username = _usernameController.text.trim();
                             await credential.user?.updateDisplayName(username);
-                            // Simpan juga ke Firestore
+                            // Pastikan field default Firestore terisi lengkap
+                            await ensureUserDoc();
+                            // Update displayName saja (merge, tidak overwrite field lain)
                             final docRef = FirebaseFirestore.instance.collection('users').doc(credential.user?.uid);
                             await docRef.set({'displayName': username}, SetOptions(merge: true));
-                            await ensureUserDoc();
                             if (context.mounted) {
                               Navigator.pop(context);
                             }
