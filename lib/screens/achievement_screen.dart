@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_profile.dart';
 
 class AchievementScreen extends StatelessWidget {
   const AchievementScreen({super.key});
@@ -56,14 +59,6 @@ class _CustomAppBar extends StatelessWidget {
               Navigator.pop(context);
             },
           ),
-          const Text(
-            'Kembali',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.black87,
-            ),
-          ),
           const Spacer(),
           const Text(
             'Prestasi',
@@ -80,23 +75,62 @@ class _CustomAppBar extends StatelessWidget {
   }
 }
 
-// Section Peringkat
-class _RankingSection extends StatelessWidget {
-  final List<_RankingData> rankingList = const [
-    _RankingData(1, 'Andi', 2450, Icons.pets, Color(0xFFFFD600)), // emas
-    _RankingData(2, 'Siti', 2200, Icons.pets, Color(0xFFB0BEC5)), // silver
-    _RankingData(3, 'Budi', 2000, Icons.pets, Color(0xFFB87333)), // perunggu
-    _RankingData(4, 'Kamu', 1750, Icons.pets, Color(0xFFC8E6C9)), // highlight
-    _RankingData(5, 'Rani', 1500, Icons.pets, Color(0xFF81C784)), // hijau
-    _RankingData(6, 'Doni', 1200, Icons.pets, Color(0xFF90CAF9)), // biru
-  ];
+class _RankingSection extends StatefulWidget {
+  @override
+  State<_RankingSection> createState() => _RankingSectionState();
+}
+
+class _RankingSectionState extends State<_RankingSection> {
+  List<UserProfile> leaderboard = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLeaderboard();
+  }
+
+Future<void> _fetchLeaderboard() async {
+  setState(() => loading = true);
+
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('xp', descending: true)
+        .limit(5)
+        .get();
+
+    debugPrint('=== LEADERBOARD DEBUG ===');
+    debugPrint('Docs count: ${snapshot.docs.length}');
+    for (final d in snapshot.docs) {
+      debugPrint('doc: ${d.id} -> ${d.data()}');
+    }
+
+    leaderboard = snapshot.docs.map((doc) {
+      final data = doc.data();
+      return UserProfile(
+        uid: doc.id,
+        displayName: (data['displayName'] ?? data['username'] ?? 'Pengguna') as String,
+        xp: (data['xp'] ?? 0) is int
+            ? data['xp'] as int
+            : (data['xp'] as num).toInt(),
+        // kalau UserProfile punya field lain, bisa tambahin default di sini
+      );
+    }).toList();
+  } catch (e, st) {
+    debugPrint('Error leaderboard: $e');
+    debugPrint(st.toString());
+    leaderboard = [];
+  }
+
+  setState(() => loading = false);
+}
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Judul section dengan icon piala
         Row(
           children: const [
             Icon(Icons.emoji_events, color: Color(0xFFFFD600), size: 22),
@@ -112,35 +146,42 @@ class _RankingSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        // List ranking vertikal
-        Column(
-          children: rankingList.map((data) {
-            final isMe = data.name == 'Kamu';
-            return RankingItem(
-              rank: data.rank,
-              name: data.name,
-              xp: data.xp,
-              icon: data.icon,
-              badgeColor: data.badgeColor,
-              highlight: isMe,
-            );
-          }).toList(),
-        ),
+        if (loading)
+          const Center(child: CircularProgressIndicator()),
+        if (!loading && leaderboard.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Text('Belum ada data peringkat.', style: TextStyle(color: Colors.grey)),
+          ),
+        if (!loading && leaderboard.isNotEmpty)
+          Column(
+            children: leaderboard.asMap().entries.map((entry) {
+              final idx = entry.key;
+              final user = entry.value;
+              // Rank: idx+1
+              final rank = idx + 1;
+              // Badge color: gold/silver/bronze/green/blue
+              Color badgeColor;
+              if (rank == 1) badgeColor = Color(0xFFFFD600);
+              else if (rank == 2) badgeColor = Color(0xFFB0BEC5);
+              else if (rank == 3) badgeColor = Color(0xFFB87333);
+              else if (rank == 4) badgeColor = Color(0xFFC8E6C9);
+              else badgeColor = Color(0xFF81C784);
+              return RankingItem(
+                rank: rank,
+                name: user.displayName ?? 'Pengguna',
+                xp: user.xp,
+                icon: Icons.pets,
+                badgeColor: badgeColor,
+                highlight: false,
+              );
+            }).toList(),
+          ),
       ],
     );
   }
 }
 
-class _RankingData {
-  final int rank;
-  final String name;
-  final int xp;
-  final IconData icon;
-  final Color badgeColor;
-  const _RankingData(this.rank, this.name, this.xp, this.icon, this.badgeColor);
-}
-
-// Widget item ranking
 class RankingItem extends StatelessWidget {
   final int rank;
   final String name;
@@ -274,7 +315,6 @@ class _MedalData {
   const _MedalData(this.name, this.icon, this.color);
 }
 
-// Widget item medali
 class MedalItem extends StatelessWidget {
   final String name;
   final IconData icon;
