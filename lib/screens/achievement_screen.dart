@@ -291,60 +291,22 @@ class _MedalSection extends StatefulWidget {
   State<_MedalSection> createState() => _MedalSectionState();
 }
 
-enum BadgeCategory {
+enum MedalCategory {
   jejak,
   venasi,
   belajar,
   gelar,
-  all,
 }
 
-class _MedalSectionState extends State<_MedalSection> {
-  // Semua badge dikelompokkan per kategori
-  static const List<_BadgeCategoryData> badgeCategories = [
-    _BadgeCategoryData(
-      category: BadgeCategory.jejak,
-      title: 'Jejak Petualangan Daun',
-      badges: [
-        _BadgeData('Pemula Daun', 'assets/Jejak-Petualangan-Daun/Pemula-Daun.png', 'jejak_pemula'),
-        _BadgeData('Scan Pertama', 'assets/Jejak-Petualangan-Daun/Scan-Pertama.png', 'jejak_scan1'),
-        _BadgeData('Penjelajah Daun', 'assets/Jejak-Petualangan-Daun/Penjelajah-Daun.png', 'jejak_scan5'),
-        _BadgeData('Pemburu Daun', 'assets/Jejak-Petualangan-Daun/Pemburu-Daun.png', 'jejak_scan10'),
-        _BadgeData('Penjelajah Hebat', 'assets/Jejak-Petualangan-Daun/Penjelajah-Hebat.png', 'jejak_scan20'),
-        _BadgeData('Raja Daun', 'assets/Jejak-Petualangan-Daun/Raja-Daun.png', 'jejak_scan50'),
-      ],
-    ),
-    _BadgeCategoryData(
-      category: BadgeCategory.venasi,
-      title: 'Ahli Venasi Daun',
-      badges: [
-        _BadgeData('Ahli Menyirip', 'assets/Ahli-Venasi-Daun/Ahli-Menyirip.png', 'venasi_menyirip'),
-        _BadgeData('Ahli Menjari', 'assets/Ahli-Venasi-Daun/Ahli-Menjari.png', 'venasi_menjari'),
-        _BadgeData('Ahli Melengkung', 'assets/Ahli-Venasi-Daun/Ahli-Melengkung.png', 'venasi_melengkung'),
-        _BadgeData('Ahli Sejajar', 'assets/Ahli-Venasi-Daun/Ahli-Sejajar.png', 'venasi_sejajar'),
-      ],
-    ),
-    _BadgeCategoryData(
-      category: BadgeCategory.belajar,
-      title: 'Pencapaian Belajar',
-      badges: [
-        _BadgeData('Mulai Belajar', 'assets/Pencapaian-Belajar/Mulai-Belajar.png', 'belajar_mulai'),
-        _BadgeData('Kenal Semua Venasi', 'assets/Pencapaian-Belajar/Kenal-Semua-Venasi.png', 'belajar_venasi'),
-      ],
-    ),
-    _BadgeCategoryData(
-      category: BadgeCategory.gelar,
-      title: 'Gelar Petualangan',
-      badges: [
-        _BadgeData('Penjelajah Junior', 'assets/Gelar-Petualangan/junior.png', 'gelar_junior'),
-        _BadgeData('Penjelajah Muda', 'assets/Gelar-Petualangan/penjelajah-muda.png', 'gelar_muda'),
-        _BadgeData('Penjelajah Andal', 'assets/Gelar-Petualangan/penjelajah-andal.png', 'gelar_andal'),
-        _BadgeData('Master Daun', 'assets/Gelar-Petualangan/master-daun.png', 'gelar_master'),
-      ],
-    ),
-  ];
+const Map<MedalCategory, String> medalCategoryLabels = {
+  MedalCategory.jejak: 'Jejak Bertualang',
+  MedalCategory.venasi: 'Venasi',
+  MedalCategory.belajar: 'Capaian Belajar',
+  MedalCategory.gelar: 'Gelar Petualangan',
+};
 
-  BadgeCategory selectedCategory = BadgeCategory.all;
+class _MedalSectionState extends State<_MedalSection> {
+  Set<MedalCategory> selectedCategories = MedalCategory.values.toSet();
   List<dynamic> userBadges = [];
   bool loading = true;
 
@@ -372,9 +334,12 @@ class _MedalSectionState extends State<_MedalSection> {
 
   @override
   Widget build(BuildContext context) {
-    final categoriesToShow = selectedCategory == BadgeCategory.all
-        ? badgeCategories
-        : badgeCategories.where((c) => c.category == selectedCategory).toList();
+    // Group badges by groupTitle, but only those in selectedCategories
+    final filteredBadges = allBadges.where((b) => selectedCategories.contains(b.category)).toList();
+    final groupMap = <String, List<_BadgeData>>{};
+    for (final badge in filteredBadges) {
+      groupMap.putIfAbsent(badge.groupTitle, () => []).add(badge);
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,43 +355,62 @@ class _MedalSectionState extends State<_MedalSection> {
               ),
             ),
             const Spacer(),
-            DropdownButton<BadgeCategory>(
-              value: selectedCategory,
-              items: const [
-                DropdownMenuItem(
-                  value: BadgeCategory.all,
-                  child: Text('Semua'),
-                ),
-                DropdownMenuItem(
-                  value: BadgeCategory.jejak,
-                  child: Text('Jejak'),
-                ),
-                DropdownMenuItem(
-                  value: BadgeCategory.venasi,
-                  child: Text('Venasi'),
-                ),
-                DropdownMenuItem(
-                  value: BadgeCategory.belajar,
-                  child: Text('Belajar'),
-                ),
-                DropdownMenuItem(
-                  value: BadgeCategory.gelar,
-                  child: Text('Gelar'),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => selectedCategory = val);
-              },
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              underline: Container(),
-            ),
           ],
+        ),
+        const SizedBox(height: 12),
+        // Pill-style multi-select filter
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...MedalCategory.values.map((cat) {
+                final selected = selectedCategories.contains(cat);
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (selected) {
+                          // Prevent empty selection
+                          if (selectedCategories.length > 1) {
+                            selectedCategories.remove(cat);
+                          }
+                        } else {
+                          selectedCategories.add(cat);
+                        }
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? const Color(0xFF388E3C) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF388E3C), width: 1.2),
+                        boxShadow: selected
+                            ? [BoxShadow(color: Colors.green.withOpacity(0.12), blurRadius: 6, offset: Offset(0, 2))]
+                            : [],
+                      ),
+                      child: Text(
+                        medalCategoryLabels[cat]!,
+                        style: TextStyle(
+                          color: selected ? Colors.white : const Color(0xFF388E3C),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         if (loading)
           const Center(child: CircularProgressIndicator()),
         if (!loading)
-          ...categoriesToShow.map((cat) => Container(
+          ...groupMap.entries.map((entry) => Container(
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 18),
             child: Card(
@@ -440,14 +424,14 @@ class _MedalSectionState extends State<_MedalSection> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0, top: 0.0),
                       child: Text(
-                        cat.title,
+                        entry.key,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF388E3C)),
                       ),
                     ),
                     Wrap(
                       spacing: 16,
                       runSpacing: 16,
-                      children: cat.badges.map<Widget>((badge) {
+                      children: entry.value.map<Widget>((badge) {
                         final owned = userBadges.contains(badge.id);
                         return MedalItem(
                           name: badge.name,
@@ -466,19 +450,38 @@ class _MedalSectionState extends State<_MedalSection> {
   }
 }
 
-class _BadgeCategoryData {
-  final BadgeCategory category;
-  final String title;
-  final List<_BadgeData> badges;
-  const _BadgeCategoryData({required this.category, required this.title, required this.badges});
-}
-
+// Removed _BadgeCategoryData class as it is no longer needed
 class _BadgeData {
   final String name;
   final String assetPath;
   final String id;
-  const _BadgeData(this.name, this.assetPath, this.id);
+  final MedalCategory category;
+  final String groupTitle;
+  const _BadgeData(this.name, this.assetPath, this.id, this.category, this.groupTitle);
 }
+
+const List<_BadgeData> allBadges = [
+  // Jejak
+  _BadgeData('Pemula Daun', 'assets/Jejak-Petualangan-Daun/Pemula-Daun.png', 'jejak_pemula', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  _BadgeData('Scan Pertama', 'assets/Jejak-Petualangan-Daun/Scan-Pertama.png', 'jejak_scan1', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  _BadgeData('Penjelajah Daun', 'assets/Jejak-Petualangan-Daun/Penjelajah-Daun.png', 'jejak_scan5', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  _BadgeData('Pemburu Daun', 'assets/Jejak-Petualangan-Daun/Pemburu-Daun.png', 'jejak_scan10', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  _BadgeData('Penjelajah Hebat', 'assets/Jejak-Petualangan-Daun/Penjelajah-Hebat.png', 'jejak_scan20', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  _BadgeData('Raja Daun', 'assets/Jejak-Petualangan-Daun/Raja-Daun.png', 'jejak_scan50', MedalCategory.jejak, 'Jejak Petualangan Daun'),
+  // Venasi
+  _BadgeData('Ahli Menyirip', 'assets/Ahli-Venasi-Daun/Ahli-Menyirip.png', 'venasi_menyirip', MedalCategory.venasi, 'Ahli Venasi Daun'),
+  _BadgeData('Ahli Menjari', 'assets/Ahli-Venasi-Daun/Ahli-Menjari.png', 'venasi_menjari', MedalCategory.venasi, 'Ahli Venasi Daun'),
+  _BadgeData('Ahli Melengkung', 'assets/Ahli-Venasi-Daun/Ahli-Melengkung.png', 'venasi_melengkung', MedalCategory.venasi, 'Ahli Venasi Daun'),
+  _BadgeData('Ahli Sejajar', 'assets/Ahli-Venasi-Daun/Ahli-Sejajar.png', 'venasi_sejajar', MedalCategory.venasi, 'Ahli Venasi Daun'),
+  // Belajar
+  _BadgeData('Mulai Belajar', 'assets/Pencapaian-Belajar/Mulai-Belajar.png', 'belajar_mulai', MedalCategory.belajar, 'Pencapaian Belajar'),
+  _BadgeData('Kenal Semua Venasi', 'assets/Pencapaian-Belajar/Kenal-Semua-Venasi.png', 'belajar_venasi', MedalCategory.belajar, 'Pencapaian Belajar'),
+  // Gelar
+  _BadgeData('Penjelajah Junior', 'assets/Gelar-Petualangan/junior.png', 'gelar_junior', MedalCategory.gelar, 'Gelar Petualangan'),
+  _BadgeData('Penjelajah Muda', 'assets/Gelar-Petualangan/penjelajah-muda.png', 'gelar_muda', MedalCategory.gelar, 'Gelar Petualangan'),
+  _BadgeData('Penjelajah Andal', 'assets/Gelar-Petualangan/penjelajah-andal.png', 'gelar_andal', MedalCategory.gelar, 'Gelar Petualangan'),
+  _BadgeData('Master Daun', 'assets/Gelar-Petualangan/master-daun.png', 'gelar_master', MedalCategory.gelar, 'Gelar Petualangan'),
+];
 
 class MedalItem extends StatelessWidget {
   final String name;
