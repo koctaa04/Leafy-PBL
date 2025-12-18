@@ -72,8 +72,15 @@ flutter:
     - assets/sejajar.png
     - assets/logo-leafy.png
     - assets/Character/
-    - assets/Badge-Level/
     - assets/Icon/
+    - assets/Ahli-Venasi-Daun/
+    # - assets/Badge-Level/
+    # - assets/Badge-Bidang-Keahlian/
+    # - assets/Badge-Belajar/
+    - assets/Gelar-Petualangan/
+    - assets/Jejak-Petualangan-Daun/
+    - assets/Pencapaian-Belajar/
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

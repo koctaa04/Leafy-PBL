@@ -291,15 +291,60 @@ class _MedalSection extends StatefulWidget {
   State<_MedalSection> createState() => _MedalSectionState();
 }
 
+enum BadgeCategory {
+  jejak,
+  venasi,
+  belajar,
+  gelar,
+  all,
+}
+
 class _MedalSectionState extends State<_MedalSection> {
-  // Daftar semua badge yang tersedia (bisa juga diambil dari Firestore jika ingin remote)
-  final List<_MedalData> allBadges = const [
-    _MedalData('Pemula', Icons.star_border, Color(0xFFB0BEC5), 'pemula'),
-    _MedalData('10 Daun', Icons.eco, Color(0xFF00C853), '10daun'),
-    _MedalData('Penjelajah', Icons.explore, Color(0xFFFFD600), 'penjelajah'),
-    _MedalData('Ahli Venasi', Icons.account_tree, Color(0xFF90CAF9), 'venasi'),
-    _MedalData('Kolektor', Icons.collections, Color(0xFFE1BEE7), 'kolektor'),
+  // Semua badge dikelompokkan per kategori
+  static const List<_BadgeCategoryData> badgeCategories = [
+    _BadgeCategoryData(
+      category: BadgeCategory.jejak,
+      title: 'Jejak Petualangan Daun',
+      badges: [
+        _BadgeData('Pemula Daun', 'assets/Jejak-Petualangan-Daun/Pemula-Daun.png', 'jejak_pemula'),
+        _BadgeData('Scan Pertama', 'assets/Jejak-Petualangan-Daun/Scan-Pertama.png', 'jejak_scan1'),
+        _BadgeData('Penjelajah Daun', 'assets/Jejak-Petualangan-Daun/Penjelajah-Daun.png', 'jejak_scan5'),
+        _BadgeData('Pemburu Daun', 'assets/Jejak-Petualangan-Daun/Pemburu-Daun.png', 'jejak_scan10'),
+        _BadgeData('Petualang Daun', 'assets/Jejak-Petualangan-Daun/Petualang-Daun.png', 'jejak_scan20'),
+        _BadgeData('Raja Daun', 'assets/Jejak-Petualangan-Daun/Raja-Daun.png', 'jejak_scan50'),
+      ],
+    ),
+    _BadgeCategoryData(
+      category: BadgeCategory.venasi,
+      title: 'Ahli Venasi Daun',
+      badges: [
+        _BadgeData('Ahli Menyirip', 'assets/Ahli-Venasi-Daun/Ahli-Menyirip.png', 'venasi_menyirip'),
+        _BadgeData('Ahli Menjari', 'assets/Ahli-Venasi-Daun/Ahli-Menjari.png', 'venasi_menjari'),
+        _BadgeData('Ahli Melengkung', 'assets/Ahli-Venasi-Daun/Ahli-Melengkung.png', 'venasi_melengkung'),
+        _BadgeData('Ahli Sejajar', 'assets/Ahli-Venasi-Daun/Ahli-Sejajar.png', 'venasi_sejajar'),
+      ],
+    ),
+    _BadgeCategoryData(
+      category: BadgeCategory.belajar,
+      title: 'Pencapaian Belajar',
+      badges: [
+        _BadgeData('Mulai Belajar', 'assets/Pencapaian-Belajar/Mulai-Belajar.png', 'belajar_mulai'),
+        _BadgeData('Kenal Semua Venasi', 'assets/Pencapaian-Belajar/Kenal-Semua-Venasi.png', 'belajar_venasi'),
+      ],
+    ),
+    _BadgeCategoryData(
+      category: BadgeCategory.gelar,
+      title: 'Gelar Petualangan',
+      badges: [
+        _BadgeData('Penjelajah Junior', 'assets/Gelar-Petualangan/junior.png', 'gelar_junior'),
+        _BadgeData('Penjelajah Muda', 'assets/Gelar-Petualangan/penjelajah-muda.png', 'gelar_muda'),
+        _BadgeData('Penjelajah Andal', 'assets/Gelar-Petualangan/penjelajah-andal.png', 'gelar_andal'),
+        _BadgeData('Master Daun', 'assets/Gelar-Petualangan/master-daun.png', 'gelar_master'),
+      ],
+    ),
   ];
+
+  BadgeCategory selectedCategory = BadgeCategory.all;
   List<dynamic> userBadges = [];
   bool loading = true;
 
@@ -327,34 +372,169 @@ class _MedalSectionState extends State<_MedalSection> {
 
   @override
   Widget build(BuildContext context) {
+    final categoriesToShow = selectedCategory == BadgeCategory.all
+        ? badgeCategories
+        : badgeCategories.where((c) => c.category == selectedCategory).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Medali & Pencapaian',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+        Row(
+          children: [
+            const Text(
+              '🥇 Medali & Pencapaian',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const Spacer(),
+            DropdownButton<BadgeCategory>(
+              value: selectedCategory,
+              items: const [
+                DropdownMenuItem(
+                  value: BadgeCategory.all,
+                  child: Text('Semua'),
+                ),
+                DropdownMenuItem(
+                  value: BadgeCategory.jejak,
+                  child: Text('Jejak'),
+                ),
+                DropdownMenuItem(
+                  value: BadgeCategory.venasi,
+                  child: Text('Venasi'),
+                ),
+                DropdownMenuItem(
+                  value: BadgeCategory.belajar,
+                  child: Text('Belajar'),
+                ),
+                DropdownMenuItem(
+                  value: BadgeCategory.gelar,
+                  child: Text('Gelar'),
+                ),
+              ],
+              onChanged: (val) {
+                if (val != null) setState(() => selectedCategory = val);
+              },
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              underline: Container(),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         if (loading)
           const Center(child: CircularProgressIndicator()),
         if (!loading)
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: allBadges.map((badge) {
-              final owned = userBadges.contains(badge.id);
-              return MedalItem(
-                name: badge.name,
-                icon: badge.icon,
-                color: owned ? badge.color : Colors.grey[400]!,
-                owned: owned,
-              );
-            }).toList(),
+          ...categoriesToShow.map((cat) => Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 18),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0, top: 0.0),
+                      child: Text(
+                        cat.title,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF388E3C)),
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: cat.badges.map<Widget>((badge) {
+                        final owned = userBadges.contains(badge.id);
+                        return MedalItem(
+                          name: badge.name,
+                          assetPath: badge.assetPath,
+                          owned: owned,
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )),
+      ],
+    );
+  }
+}
+
+class _BadgeCategoryData {
+  final BadgeCategory category;
+  final String title;
+  final List<_BadgeData> badges;
+  const _BadgeCategoryData({required this.category, required this.title, required this.badges});
+}
+
+class _BadgeData {
+  final String name;
+  final String assetPath;
+  final String id;
+  const _BadgeData(this.name, this.assetPath, this.id);
+}
+
+class MedalItem extends StatelessWidget {
+  final String name;
+  final String assetPath;
+  final bool owned;
+
+  const MedalItem({Key? key, required this.name, required this.assetPath, this.owned = false}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ColorFiltered(
+          colorFilter: owned
+              ? const ColorFilter.mode(Colors.transparent, BlendMode.multiply)
+              : const ColorFilter.matrix(<double>[
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0.2126, 0.7152, 0.0722, 0, 0,
+                  0, 0, 0, 1, 0,
+                ]),
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                assetPath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.emoji_events, size: 40, color: Colors.grey),
+              ),
+            ),
           ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: owned ? Colors.black87 : Colors.grey,
+          ),
+        ),
       ],
     );
   }
@@ -368,45 +548,3 @@ class _MedalData {
   const _MedalData(this.name, this.icon, this.color, this.id);
 }
 
-class MedalItem extends StatelessWidget {
-  final String name;
-  final IconData icon;
-  final Color color;
-  final bool owned;
-  const MedalItem({super.key, required this.name, required this.icon, required this.color, this.owned = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 110,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 6,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 32),
-          const SizedBox(height: 10),
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: owned ? Colors.black87 : Colors.grey,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
