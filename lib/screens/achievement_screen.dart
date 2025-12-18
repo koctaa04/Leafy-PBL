@@ -310,7 +310,7 @@ class _MedalSectionState extends State<_MedalSection> {
         _BadgeData('Scan Pertama', 'assets/Jejak-Petualangan-Daun/Scan-Pertama.png', 'jejak_scan1'),
         _BadgeData('Penjelajah Daun', 'assets/Jejak-Petualangan-Daun/Penjelajah-Daun.png', 'jejak_scan5'),
         _BadgeData('Pemburu Daun', 'assets/Jejak-Petualangan-Daun/Pemburu-Daun.png', 'jejak_scan10'),
-        _BadgeData('Petualang Daun', 'assets/Jejak-Petualangan-Daun/Petualang-Daun.png', 'jejak_scan20'),
+        _BadgeData('Penjelajah Hebat', 'assets/Jejak-Petualangan-Daun/Penjelajah-Hebat.png', 'jejak_scan20'),
         _BadgeData('Raja Daun', 'assets/Jejak-Petualangan-Daun/Raja-Daun.png', 'jejak_scan50'),
       ],
     ),
